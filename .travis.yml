@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ygrinman/react-test -f./client/Dockerfile.dev ./client
+
+script:
+  - docker run ygrinman/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t ygrinman/multi-client ./client
+  - docker build -t ygrinman/multi-nginx ./nginx
+  - docker build -t ygrinman/multi-server ./server
+  - docker build -t ygrinman/multi-worker ./worker
+  # Login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take images and push them to dockerhub
+  - docker push ygrinman/multi-client
+  - docker push ygrinman/multi-nginx
+  - docker push ygrinman/multi-server
+  - docker push ygrinman/multi-worker
